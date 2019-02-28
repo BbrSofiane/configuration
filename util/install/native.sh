@@ -94,6 +94,11 @@ if [[ -f my-passwords.yml ]]; then
     EXTRA_VARS="-e@$(pwd)/my-passwords.yml $EXTRA_VARS"
 fi
 
+# server-vars.yml
+if [[ -f server-vars.yml ]]; then
+    EXTRA_VARS="-e@$(pwd)/server-vars.yml $EXTRA_VARS"
+fi
+
 CONFIGURATION_VERSION=${CONFIGURATION_VERSION-$OPENEDX_RELEASE}
 
 ##
