@@ -15,9 +15,8 @@
 #
 - name: Install debian needed pkgs
   apt:
-    name: "{{ item }}"
+    name: "{{ datadog_debian_pkgs }}"
     state: present
-  with_items: "{{ datadog_debian_pkgs }}"
   tags:
     - datadog
 
@@ -39,7 +38,7 @@
 
 - name: Install datadog agent
   apt:
-    name: "datadog-agent={{ datadog_agent_version }}"
+    name: "datadog-agent={{ DATADOG_AGENT_VERSION }}"
   tags:
     - datadog
 

@@ -21,7 +21,7 @@ de_jenkins_seed_job_source: '{{ role_path }}/../jenkins_data_engineering/files/x
 
 de_jenkins_user_uid: 900
 de_jenkins_group_gid: 900
-de_jenkins_version: jenkins_2.89.4
+DE_JENKINS_VERSION: jenkins_2.89.4
 de_jenkins_jvm_args: '-Djava.awt.headless=true -Xmx16g -Djenkins.install.runSetupWizard=false'
 
 jenkins_base_environment_variables:
@@ -39,6 +39,9 @@ JENKINS_DATA_ENGINEERING_EXTRA_PKGS:
   - libgraphviz-dev
   - libxmlsec1-dev
   - zip
+
+# See https://www.vaultproject.io/downloads for latest version.
+DE_JENKINS_VAULT_CLI_VERSION: 1.5.4
 
 # plugins
 de_jenkins_plugins_list:
@@ -235,9 +238,6 @@ de_jenkins_ghprb_cron_schedule: 'H/5 * * * *'
 
 # github
 JENKINS_GITHUB_CONFIG: ''
-
-# hipchat
-de_jenkins_hipchat_room: 'Data Engineering'
 
 # ec2
 de_jenkins_instance_cap: '500'

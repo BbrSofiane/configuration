@@ -1,9 +1,12 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import json
 import click
 import yaml
 import requests
 
 import json
+from six.moves import map
 
 
 class PingdomInvalidResponse(Exception):
@@ -28,39 +31,37 @@ def main(noop, pingdom_email, pingdom_password,
          pingdom_api_key,
          alert_config_file):
     with open(alert_config_file, 'r') as stream:
-        config_file_content = yaml.load(stream)
+        config_file_content = yaml.safe_load(stream)
     config_file_content = replace_user_names_with_userids(pingdom_email,
                                                           pingdom_password,
                                                           pingdom_api_key,
                                                           config_file_content)
 
     config_file_content = integration_names_to_ids(config_file_content)
-    checks_by_hostname = build_checks_by_hostname(pingdom_email,
+    check_for_update, checks_by_hostname = build_checks_by_hostname(pingdom_email,
                                                   pingdom_password,
                                                   pingdom_api_key)
-    hostnames = checks_by_hostname.keys()
-
     for alert_config in config_file_content['checks']:
-        if alert_config['host'] not in hostnames:
+        if (alert_config['name'], alert_config['host']) not in checks_by_hostname.items():
             # Create new check
             if noop:
-                print("Would CREATE: {0}, but you set the noop flag.".format(
-                    alert_config))
+                print(("Would CREATE: {0}, but you set the noop flag.".format(
+                    alert_config)))
             else:
-                print("CREATE: {0}".format(alert_config))
+                print(("CREATE: {0}".format(alert_config)))
                 create_check(pingdom_email, pingdom_password,
                              pingdom_api_key, alert_config)
 
         else:
             # Updating existing check
-            existing_check = checks_by_hostname[alert_config['host']]
+            existing_check = check_for_update[alert_config['name']]
             if noop:
-                print("""
+                print(("""
                 Has changes, would UPDATE: {0},
                 but you set the noop flag.
-                """.format(alert_config))
+                """.format(alert_config)))
             else:
-                print("Attempting UPDATE: {0}".format(alert_config))
+                print(("Attempting UPDATE: {0}".format(alert_config)))
                 # We always update because the parameters to POST check
                 # and the paramters returned by GET check differ.
                 # It would be difficult to figure out if changes
@@ -83,7 +84,7 @@ def replace_user_names_with_userids(pingdom_email,
             for user in alert['users']:
                 if 'userids' in alert:
                     user_ids.extend(
-                        map(lambda x: x.strip(), alert['userids'].split(',')))
+                        [x.strip() for x in alert['userids'].split(',')])
                 if user not in user_ids_by_name:
                     raise PingdomInvalidResponse(
                         'Pingdom has no user with the name {0}'.format(user))
@@ -103,7 +104,7 @@ def integration_names_to_ids(config_file_content):
                 if('integrationids' in alert):
                     integration_ids.extend(
                         alert['integrationids'].split(','))
-                if integration not in integration_ids_by_name.keys():
+                if integration not in list(integration_ids_by_name.keys()):
                     print(
                         """
                         You specified a integration
@@ -195,9 +196,11 @@ def list_users(pingdom_email, pingdom_password, pingdom_api_key):
 def build_checks_by_hostname(pingdom_email, pingdom_password, pingdom_api_key):
     checks = list_checks(pingdom_email, pingdom_password, pingdom_api_key)
     checks_by_hostname = {}
+    check_for_update = {}
     for check in checks:
-        checks_by_hostname[str(check['hostname'])] = check
-    return checks_by_hostname
+        check_for_update[str(check['name'])] = check
+        checks_by_hostname[str(check['name'])] = str(check['hostname'])
+    return check_for_update, checks_by_hostname
 
 
 def build_userid_by_name(pingdom_email, pingdom_password, pingdom_api_key):
@@ -213,15 +216,15 @@ def build_userid_by_name(pingdom_email, pingdom_password, pingdom_api_key):
 def print_request_and_response(response):
     print("Request:")
     for key in response.request.headers:
-        print("{0}: {1}".format(key, response.request.headers[key]))
+        print(("{0}: {1}".format(key, response.request.headers[key])))
     print("")
-    print(response.request.body)
+    print((response.request.body))
     print("------------------")
     print("Response:")
     for key in response.headers:
-        print("{0}: {1}".format(key, response.headers[key]))
+        print(("{0}: {1}".format(key, response.headers[key])))
     print("")
-    print(response.content.decode('utf-8'))
+    print((response.content.decode('utf-8')))
     print("------------------")
 
 

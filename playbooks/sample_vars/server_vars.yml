@@ -91,7 +91,6 @@
 #EDXAPP_YOUTUBE_API_KEY: "Your Youtube API Key"
 #
 #EDXAPP_FEATURES:
-#  AUTH_USE_OPENID_PROVIDER: true
 #  ENABLE_DISCUSSION_SERVICE: true
 #  ENABLE_DISCUSSION_HOME_PANEL: true
 #  ENABLE_INSTRUCTOR_ANALYTICS: false
@@ -100,6 +99,7 @@
 #  PREVIEW_LMS_BASE: "{{ EDXAPP_PREVIEW_LMS_BASE }}"
 #  ENABLE_GRADE_DOWNLOADS: true
 #  ENABLE_MKTG_SITE: "{{ EDXAPP_ENABLE_MKTG_SITE }}"
+#  ENABLE_PUBLISHER: "{{ EDXAPP_ENABLE_PUBLISHER }}"
 #  AUTOMATIC_AUTH_FOR_TESTING: "{{ EDXAPP_ENABLE_AUTO_AUTH }}"
 #  ENABLE_THIRD_PARTY_AUTH: "{{ EDXAPP_ENABLE_THIRD_PARTY_AUTH }}"
 #  AUTOMATIC_VERIFY_STUDENT_IDENTITY_FOR_TESTING: true
@@ -129,14 +129,6 @@
 #  BUCKET: "your-video-bucket"
 #  ROOT_PATH: "edx-video-upload-pipeline/unprocessed"
 #
-#EDXAPP_CC_PROCESSOR_NAME: "CyberSource2"
-#EDXAPP_CC_PROCESSOR:
-#  CyberSource2:
-#    PURCHASE_ENDPOINT: "/shoppingcart/payment_fake/"
-#    SECRET_KEY: ""
-#    ACCESS_KEY: ""
-#    PROFILE_ID: ""
-#
 #EDXAPP_PROFILE_IMAGE_BACKEND:
 #  class: storages.backends.s3boto.S3BotoStorage
 #  options:
@@ -155,7 +147,7 @@
 #AWS_S3_LOGS_NOTIFY_EMAIL: devops+logs@example.com
 #AWS_S3_LOGS_FROM_EMAIL: devops@example.com
 #EDX_ANSIBLE_DUMP_VARS: true
-#configuration_version: release
+#CONFIGURATION_VERSION: release
 #CERTS_AWS_KEY: 'AWS SECRET KEY HERE'
 #CERTS_AWS_ID: 'AWS KEY ID HERE'
 #CERTS_REPO: "git@github.com:/edx/certificates"

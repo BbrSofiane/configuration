@@ -6,7 +6,7 @@
     dest: /etc/apt/preferences.d/firefox-pinned-version
     content: |
       Package: firefox
-      Pin: {{ firefox_version }}
+      Pin: {{ FIREFOX_VERSION }}
       Pin-Priority: 1001
   tags:
     - install
@@ -51,13 +51,20 @@
     - install
     - install:system-requirements
 
-- name: download xenial browser packages from S3
+- name: Add Chrome Public keys for focal
+  shell: wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
+  when: ansible_distribution_release == 'focal'
+  tags:
+    - install
+    - install:system-requirements
+
+- name: download xenial/bionic/focal browser packages from S3
   get_url:
     dest: /tmp/{{ item.name }}
     url: "{{ item.url }}"
   register: download_xenial_deb
   with_items: "{{ browser_s3_deb_pkgs }}"
-  when: ansible_distribution_release == 'xenial'
+  when: ansible_distribution_release == 'xenial' or ansible_distribution_release == 'bionic' or ansible_distribution_release == 'focal'
   tags:
     - install
     - install:system-requirements
@@ -71,11 +78,11 @@
     - install
     - install:system-requirements
 
-- name: install xenial browser packages
+- name: install xenial/bionic/focal browser packages
   shell: gdebi -nq /tmp/{{ item.name }}
   with_items: "{{ browser_s3_deb_pkgs }}"
   when: download_xenial_deb.changed and
-        ansible_distribution_release == 'xenial'
+        ansible_distribution_release == 'xenial' or ansible_distribution_release == 'bionic' or ansible_distribution_release == 'focal'
   tags:
     - install
     - install:system-requirements
@@ -126,6 +133,9 @@
     src: "../files/geckodriver"
     dest: "/usr/local/bin/geckodriver"
     mode: 0755
+  tags:
+    - install
+    - install:system-requirements
 
 - assert:
     that:

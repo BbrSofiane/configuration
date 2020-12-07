@@ -14,13 +14,13 @@
 ECOMMERCE_GIT_IDENTITY: !!null
 
 ECOMMERCE_REPOS:
-  - PROTOCOL: '{{ COMMON_GIT_PROTOCOL }}'
-    DOMAIN: '{{ COMMON_GIT_MIRROR }}'
-    PATH: '{{ COMMON_GIT_PATH }}'
-    REPO: 'ecommerce.git'
-    VERSION: '{{ ECOMMERCE_VERSION }}'
+  - PROTOCOL: "{{ COMMON_GIT_PROTOCOL }}"
+    DOMAIN: "{{ COMMON_GIT_MIRROR }}"
+    PATH: "{{ COMMON_GIT_PATH }}"
+    REPO: "ecommerce.git"
+    VERSION: "{{ ECOMMERCE_VERSION }}"
     DESTINATION: "{{ ecommerce_code_dir }}"
-    SSH_KEY: '{{ ECOMMERCE_GIT_IDENTITY }}'
+    SSH_KEY: "{{ ECOMMERCE_GIT_IDENTITY }}"
 
 # depends upon Newrelic being enabled via COMMON_ENABLE_NEWRELIC
 # and a key being provided via NEWRELIC_LICENSE_KEY
@@ -36,6 +36,7 @@ ECOMMERCE_DATABASE_NAME: ecommerce
 ECOMMERCE_DATABASE_USER: ecomm001
 ECOMMERCE_DATABASE_PASSWORD: password
 ECOMMERCE_DATABASE_HOST: localhost
+ECOMMERCE_DATABASE_CONN_MAX_AGE: 60
 
 ECOMMERCE_VERSION: "master"
 ECOMMERCE_DJANGO_SETTINGS_MODULE: "ecommerce.settings.production"
@@ -61,18 +62,28 @@ ECOMMERCE_JWT_ISSUERS:
 
 ECOMMERCE_JWT_LEEWAY: 1
 
+ECOMMERCE_ENROLLMENT_FULFILLMENT_TIMEOUT: 7
+ECOMMERCE_LOGGING_ROOT_OVERRIDES: {}
+ECOMMERCE_LOGGING_SUBSECTION_OVERRIDES: {}
+
+# Needed to link to the payment micro-frontend.
+ECOMMERCE_PAYMENT_MICROFRONTEND_URL: !!null
+
 # Sailthru
 ECOMMERCE_SAILTHRU_KEY: 'sailthru key here'
 ECOMMERCE_SAILTHRU_SECRET: 'sailthru secret here'
 
 # Used to automatically configure OAuth2 Client
-ECOMMERCE_SOCIAL_AUTH_EDX_OIDC_KEY: 'ecommerce-key'
-ECOMMERCE_SOCIAL_AUTH_EDX_OIDC_SECRET: 'ecommerce-secret'
+ECOMMERCE_SOCIAL_AUTH_EDX_OAUTH2_KEY: 'ecommerce-sso-key'
+ECOMMERCE_SOCIAL_AUTH_EDX_OAUTH2_SECRET: 'ecommerce-sso-secret'
+ECOMMERCE_BACKEND_SERVICE_EDX_OAUTH2_KEY: 'ecommerce-backend-service-key'
+ECOMMERCE_BACKEND_SERVICE_EDX_OAUTH2_SECRET: 'ecommerce-backend-service-secret'
 ECOMMERCE_SOCIAL_AUTH_REDIRECT_IS_HTTPS: false
 
 # Settings for affiliate cookie tracking
 ECOMMERCE_AFFILIATE_COOKIE_NAME: '{{ EDXAPP_AFFILIATE_COOKIE_NAME | default("dev_affiliate_id") }}'
 
+ECOMMERCE_OSCAR_DEFAULT_CURRENCY: 'USD'
 ECOMMERCE_OSCAR_FROM_EMAIL: 'oscar@example.com'
 
 # NOTE: The contents of the certificates should be set in private configuration
@@ -141,8 +152,20 @@ ECOMMERCE_PAYMENT_PROCESSOR_CONFIG:
       client_id: '{{ ECOMMERCE_PAYPAL_CLIENT_ID }}'
       client_secret: '{{ ECOMMERCE_PAYPAL_CLIENT_SECRET }}'
       receipt_url: '{{ ECOMMERCE_PAYPAL_RECEIPT_URL }}'
-      cancel_url: '{{ ECOMMERCE_PAYPAL_CANCEL_URL }}'
+      cancel_checkout_path: '{{ ECOMMERCE_PAYPAL_CANCEL_URL }}'
       error_url: '{{ ECOMMERCE_PAYPAL_ERROR_URL }}'
+
+# JWT payload user attribute mapping
+ECOMMERCE_EDX_DRF_EXTENSIONS:
+  JWT_PAYLOAD_USER_ATTRIBUTE_MAPPING:
+    administrator: 'is_staff'
+    email: 'email'
+    full_name: 'full_name'
+    tracking_context: 'tracking_context'
+    user_id: 'lms_user_id'
+  JWT_PAYLOAD_MERGEABLE_USER_ATTRIBUTES:
+    - 'tracking_context'
+  OAUTH2_USER_INFO_URL: '{{ edx_django_service_oauth2_url_root }}/user_info'
 
 # Theming
 ECOMMERCE_PLATFORM_NAME: 'Your Platform Name Here'
@@ -156,11 +179,11 @@ ECOMMERCE_DEFAULT_SITE_THEME: !!null
 ECOMMERCE_STATICFILES_STORAGE: 'ecommerce.theming.storage.ThemeStorage'
 
 # Celery
-ECOMMERCE_BROKER_USERNAME: 'celery'
+ECOMMERCE_BROKER_USERNAME: ''
 ECOMMERCE_BROKER_PASSWORD: 'celery'
 ECOMMERCE_BROKER_HOST: '{{ ansible_default_ipv4.address }}'
-ECOMMERCE_BROKER_PORT: 5672
-ECOMMERCE_BROKER_TRANSPORT: 'amqp'
+ECOMMERCE_BROKER_PORT: 6379
+ECOMMERCE_BROKER_TRANSPORT: 'redis'
 ECOMMERCE_BROKER_URL: '{{ ECOMMERCE_BROKER_TRANSPORT }}://{{ ECOMMERCE_BROKER_USERNAME }}:{{ ECOMMERCE_BROKER_PASSWORD }}@{{ ECOMMERCE_BROKER_HOST }}:{{ ECOMMERCE_BROKER_PORT }}'
 
 ECOMMERCE_DISCOVERY_SERVICE_URL: 'http://localhost:8008'
@@ -170,9 +193,12 @@ ECOMMERCE_CORS_ORIGIN_WHITELIST: []
 ECOMMERCE_CORS_URLS_REGEX: ''
 ECOMMERCE_CORS_ALLOW_CREDENTIALS: false
 
+ECOMMERCE_USERNAME_REPLACEMENT_WORKER: "OVERRIDE THIS WITH A VALID USERNAME"
+
 ecommerce_service_config_overrides:
   LANGUAGE_COOKIE_NAME: '{{ ECOMMERCE_LANGUAGE_COOKIE_NAME }}'
   EDX_API_KEY: '{{ ECOMMERCE_EDX_API_KEY }}'
+  OSCAR_DEFAULT_CURRENCY: '{{ ECOMMERCE_OSCAR_DEFAULT_CURRENCY }}'
   OSCAR_FROM_EMAIL: '{{ ECOMMERCE_OSCAR_FROM_EMAIL }}'
 
   ENTERPRISE_SERVICE_URL: '{{ ECOMMERCE_ENTERPRISE_URL }}/enterprise/'
@@ -186,7 +212,12 @@ ecommerce_service_config_overrides:
     JWT_LEEWAY: '{{ ECOMMERCE_JWT_LEEWAY }}'
     JWT_DECODE_HANDLER: '{{ ECOMMERCE_JWT_DECODE_HANDLER }}'
     JWT_ISSUERS: '{{ ECOMMERCE_JWT_ISSUERS }}'
-    JWT_PUBLIC_SIGNING_JWK_SET: '{{ COMMON_JWT_PUBLIC_SIGNING_JWK_SET }}'
+    JWT_PUBLIC_SIGNING_JWK_SET: '{{ COMMON_JWT_PUBLIC_SIGNING_JWK_SET|string }}'
+    JWT_AUTH_COOKIE_HEADER_PAYLOAD: '{{ COMMON_JWT_AUTH_COOKIE_HEADER_PAYLOAD }}'
+    JWT_AUTH_COOKIE_SIGNATURE: '{{ COMMON_JWT_AUTH_COOKIE_SIGNATURE }}'
+    JWT_AUTH_REFRESH_COOKIE: '{{ COMMON_JWT_AUTH_REFRESH_COOKIE }}'
+
+  EDX_DRF_EXTENSIONS: '{{ ECOMMERCE_EDX_DRF_EXTENSIONS }}'
 
   AFFILIATE_COOKIE_KEY: '{{ ECOMMERCE_AFFILIATE_COOKIE_NAME }}'
 
@@ -211,9 +242,18 @@ ecommerce_service_config_overrides:
   CORS_URLS_REGEX: "{{ ECOMMERCE_CORS_URLS_REGEX }}"
   CORS_ALLOW_CREDENTIALS: "{{ ECOMMERCE_CORS_ALLOW_CREDENTIALS }}"
 
-ECOMMERCE_GUNICORN_WORKER_CLASS: "gevent"
+  USERNAME_REPLACEMENT_WORKER: "{{ ECOMMERCE_USERNAME_REPLACEMENT_WORKER }}"
+
+  PAYMENT_MICROFRONTEND_URL: "{{ ECOMMERCE_PAYMENT_MICROFRONTEND_URL}}"
+
+  ENROLLMENT_FULFILLMENT_TIMEOUT: "{{ ECOMMERCE_ENROLLMENT_FULFILLMENT_TIMEOUT }}"
+  LOGGING_ROOT_OVERRIDES: "{{ ECOMMERCE_LOGGING_ROOT_OVERRIDES }}"
+  LOGGING_SUBSECTION_OVERRIDES: "{{ ECOMMERCE_LOGGING_SUBSECTION_OVERRIDES }}"
+
+ECOMMERCE_GUNICORN_WORKER_CLASS: "sync"
 ECOMMERCE_GUNICORN_MAX_REQUESTS: 3000
 ECOMMERCE_GUNICORN_EXTRA: ""
+ECOMMERCE_GUNICORN_WORKERS: 2
 
 ECOMMERCE_CSRF_COOKIE_SECURE: false
 
@@ -221,6 +261,12 @@ ECOMMERCE_SESSION_COOKIE_SECURE: true
 
 # See edx_django_service_automated_users for an example of what this should be
 ECOMMERCE_AUTOMATED_USERS: {}
+
+# Remote config
+ECOMMERCE_HERMES_ENABLED: "{{ COMMON_HERMES_ENABLED }}"
+
+ECOMMERCE_DECRYPT_CONFIG_ENABLED: "{{ COMMON_DECRYPT_CONFIG_ENABLED }}"
+ECOMMERCE_COPY_CONFIG_ENABLED: "{{ COMMON_COPY_CONFIG_ENABLED }}"
 
 #
 # vars are namespace with the module name.
@@ -244,10 +290,13 @@ ECOMMERCE_ANTIVIRUS_SCAN_DIRECTORY: "{{ ecommerce_code_dir }}"
 
 ECOMMERCE_ENABLE_ADMIN_URLS_RESTRICTION: false
 
-ECOMMERCE_ADMIN_URLS: 
+ECOMMERCE_ADMIN_URLS:
   - admin
 
 ECOMMERCE_ENABLE_NEWRELIC_DISTRIBUTED_TRACING: false
+
+# Python 3 conversion
+ECOMMERCE_USE_PYTHON38: true
 
 #
 # OS packages
@@ -258,13 +307,22 @@ ecommerce_debian_pkgs:
   - libjpeg-dev
   - libssl-dev
   - libffi-dev
+  - libsqlite3-dev
+  - python3-dev
+
+ecommerce_release_specific_debian_pkgs:
+  xenial:
+    - python-dev
+  bionic:
+    - python-dev
+  focal: []
 
 ecommerce_redhat_pkgs: []
 
 ecommerce_post_migrate_commands:
   - command: './manage.py oscar_populate_countries --initial-only'
     when: true
-  - command: './manage.py create_or_update_site --site-id=1 --site-domain={{ ECOMMERCE_ECOMMERCE_URL_ROOT.split("://")[1] }} --partner-code=edX --partner-name="Open edX" --lms-url-root={{ ECOMMERCE_LMS_URL_ROOT }} --client-side-payment-processor=cybersource --payment-processors=cybersource,paypal --client-id={{ ECOMMERCE_SOCIAL_AUTH_EDX_OIDC_KEY }} --client-secret={{ ECOMMERCE_SOCIAL_AUTH_EDX_OIDC_SECRET }} --from-email staff@example.com --discovery_api_url={{ ECOMMERCE_DISCOVERY_SERVICE_URL }}/api/v1/ --journals_api_url={{ JOURNALS_API_URL|default("") }}'
+  - command: './manage.py create_or_update_site --site-id=1 --site-domain={{ ECOMMERCE_ECOMMERCE_URL_ROOT.split("://")[1] }} --partner-code=edX --partner-name="Open edX" --lms-url-root={{ ECOMMERCE_LMS_URL_ROOT }} --client-side-payment-processor=cybersource --payment-processors=cybersource,paypal --sso-client-id={{ ECOMMERCE_SOCIAL_AUTH_EDX_OAUTH2_KEY }} --sso-client-secret={{ ECOMMERCE_SOCIAL_AUTH_EDX_OAUTH2_SECRET }} --backend-service-client-id={{ ECOMMERCE_BACKEND_SERVICE_EDX_OAUTH2_KEY }} --backend-service-client-secret={{ ECOMMERCE_BACKEND_SERVICE_EDX_OAUTH2_SECRET }} --from-email staff@example.com --discovery_api_url={{ ECOMMERCE_DISCOVERY_SERVICE_URL }}/api/v1/'
     when: '{{ ecommerce_create_demo_data }}'
   - command: './manage.py create_demo_data --partner=edX'
     when: '{{ ecommerce_create_demo_data }}'

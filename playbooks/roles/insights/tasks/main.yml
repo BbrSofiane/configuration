@@ -38,6 +38,7 @@
     virtualenv: "{{ insights_venv_dir }}"
     state: present
     extra_args: "--exists-action w"
+    virtualenv_python: python3.8
   become_user: "{{ insights_user }}"
   with_items: "{{ insights_requirements }}"
   tags:
@@ -45,7 +46,7 @@
     - install:app-requirements
 
 - name: create nodeenv
-  shell: "{{ insights_venv_dir }}/bin/nodeenv {{ insights_nodeenv_dir }}  --node={{ insights_node_version }} --prebuilt --force"
+  shell: "{{ insights_venv_dir }}/bin/nodeenv {{ insights_nodeenv_dir }}  --node={{ INSIGHTS_NODE_VERSION }} --prebuilt --force"
   become_user: "{{ insights_user }}"
   tags:
     - install
@@ -135,19 +136,6 @@
   tags:
     - manage
     - manage:start
-
-- name: create symlinks from the venv bin dir
-  file:
-    src: "{{ insights_venv_dir }}/bin/{{ item }}"
-    dest: "{{ COMMON_BIN_DIR }}/{{ item.split('.')[0] }}.{{ insights_service_name }}"
-    state: link
-  with_items:
-  - python
-  - pip
-  - django-admin.py
-  tags:
-    - install
-    - install:base
 
 - name: create manage.py symlink
   file:

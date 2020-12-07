@@ -8,16 +8,18 @@
 # with the currently checked-out configuration repo.
 
 ARG BASE_IMAGE_TAG=latest
-FROM edxops/xenial-common:${BASE_IMAGE_TAG}
-MAINTAINER edxops
+FROM edxops/focal-common:${BASE_IMAGE_TAG}
+LABEL maintainer="edxops"
 USER root
-CMD ["/edx/app/supervisor/venvs/supervisor/bin/supervisord", "-n", "--configuration", "/edx/app/supervisor/supervisord.conf"]
+ENTRYPOINT ["/edx/app/discovery/devstack.sh"]
+CMD ["start"]
 
 ADD . /edx/app/edx_ansible/edx_ansible
 WORKDIR /edx/app/edx_ansible/edx_ansible/docker/plays
 
 COPY docker/build/discovery/ansible_overrides.yml /
 COPY docker/devstack_common_ansible_overrides.yml /devstack/ansible_overrides.yml
+COPY docker/build/discovery/discovery.yml /edx/etc/discovery.yml
 
 ARG OPENEDX_RELEASE=master
 ENV OPENEDX_RELEASE=${OPENEDX_RELEASE}
